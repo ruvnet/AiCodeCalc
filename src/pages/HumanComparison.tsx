@@ -33,10 +33,24 @@ export function HumanComparison() {
 
   // Set default values on first render
   React.useEffect(() => {
+    // Set default human metrics if not set
     if (!state.humanMetrics.hourlyRate) {
       dispatch({
         type: 'SET_HUMAN_METRICS',
         payload: defaultValues,
+      });
+    }
+    
+    // Set default project values if not set
+    if (!state.project.totalLoc) {
+      dispatch({
+        type: 'SET_PROJECT_DATA',
+        payload: {
+          projectName: 'My Project',
+          totalLoc: 10000,
+          complexity: 'moderate',
+          timeline: 30,
+        },
       });
     }
   }, []);
@@ -44,7 +58,7 @@ export function HumanComparison() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!state.humanMetrics.hourlyRate || !state.humanMetrics.locPerDay) {
+    if (!state.humanMetrics.hourlyRate || !state.humanMetrics.locPerDay || !state.humanMetrics.developers) {
       toast({
         title: "Validation Error",
         description: "Please fill in all required fields",

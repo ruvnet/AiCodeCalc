@@ -152,7 +152,42 @@ const initialState: CalculatorState = {
     complexity: '',
     timeline: 0,
   },
-  llmModels: [],
+  llmModels: [{
+    name: "GPT-4o",
+    inputCost: 0.01,    // $0.01 per 1K tokens
+    outputCost: 0.03,   // $0.03 per 1K tokens
+    usageShare: 60,     // 60% usage share
+    executionTime: 2.0,
+    accuracy: 98,
+    tokenEfficiency: 95,
+    reasoningScore: 98,
+    memoryUsage: 1024,
+    errorRate: 2,
+    apiCallsPerTask: 1.0,
+    cacheHitRate: 90,
+    patternRecognition: 98,
+    contextUnderstanding: 98,
+    algorithmOptimization: 95,
+    schemaHandling: 95
+  },
+  {
+    name: "GPT-4o-mini",
+    inputCost: 0.005,   // $0.005 per 1K tokens
+    outputCost: 0.015,  // $0.015 per 1K tokens
+    usageShare: 40,     // 40% usage share
+    executionTime: 1.5,
+    accuracy: 95,
+    tokenEfficiency: 92,
+    reasoningScore: 95,
+    memoryUsage: 768,
+    errorRate: 3,
+    apiCallsPerTask: 1.2,
+    cacheHitRate: 85,
+    patternRecognition: 95,
+    contextUnderstanding: 95,
+    algorithmOptimization: 92,
+    schemaHandling: 92
+  }],
   overheads: {
     // Primary Overheads
     iterationOverhead: 3.5,

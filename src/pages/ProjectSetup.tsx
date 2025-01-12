@@ -46,7 +46,7 @@ export function ProjectSetup() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!state.project.projectName || !state.project.totalLoc) {
+    if (!state.project.projectName || !state.project.totalLoc || !state.project.complexity || !state.project.timeline) {
       toast({
         title: "Validation Error",
         description: "Please fill in all required fields",
@@ -62,11 +62,11 @@ export function ProjectSetup() {
     <div className="max-w-2xl mx-auto">
       <Card className="mb-8">
         <CardHeader>
-          <h2 className="text-xl font-mono font-bold text-terminal-bright">LLM Efficiency Calculator</h2>
+          <h2 className="text-xl font-mono font-bold text-terminal-bright">Compare Agentic vs Human Software Engineering Costs</h2>
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground">
-            Calculate and optimize the efficiency of your LLM-powered development workflow. Input your project details below to analyze token usage, cost estimates, and performance metrics.
+            AiCodeCalc is a sophisticated calculator designed to analyze and compare the costs and efficiency of LLM-powered development versus traditional human development. This tool provides detailed information about each component and helps you use the calculator effectively.
           </p>
         </CardContent>
       </Card>
@@ -173,7 +173,7 @@ export function ProjectSetup() {
               type="submit"
               className="bg-terminal-primary text-background hover:bg-terminal-primary/90"
             >
-              Next: LLM Parameters
+              Next: LLM Configuration
             </Button>
           </div>
         </form>

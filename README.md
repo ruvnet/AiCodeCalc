@@ -1,69 +1,138 @@
-# Welcome to your Lovable project
+# AiCodeCalc - LLM Development Efficiency Calculator
 
-## Project info
+AiCodeCalc is a sophisticated calculator designed to analyze and compare the costs and efficiency of LLM-powered development versus traditional human development. This tool helps organizations make data-driven decisions about implementing AI-assisted development workflows.
 
-**URL**: https://lovable.dev/projects/4e5007d0-80a9-4b17-a324-77e4457a0593
+![AiCodeCalc Screenshot](public/og-image.png)
 
-## How can I edit this code?
+## Overview
 
-There are several ways of editing your application.
+AiCodeCalc provides detailed cost and efficiency analysis by considering multiple factors:
 
-**Use Lovable**
+- Project complexity and scope
+- LLM model configurations and costs
+- Development overhead factors
+- Human resource metrics
+- Agent system configurations
+- Operational expenses
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/4e5007d0-80a9-4b17-a324-77e4457a0593) and start prompting.
+## Key Benefits
 
-Changes made via Lovable will be committed automatically to this repo.
+- **Cost Analysis**: Compare direct costs between LLM-powered and human development
+- **Efficiency Metrics**: Analyze time savings and productivity improvements
+- **Resource Optimization**: Identify optimal configurations for LLM usage
+- **Risk Assessment**: Evaluate overhead factors and potential bottlenecks
+- **Team Planning**: Make informed decisions about resource allocation
 
-**Use your preferred IDE**
+## Features
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+- **Project Setup**
+  - Lines of code estimation
+  - Complexity assessment
+  - Timeline planning
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+- **LLM Configuration**
+  - Multiple model support
+  - Usage share optimization
+  - Cost tracking per 1K tokens
 
-Follow these steps:
+- **Human Metrics**
+  - Team size and composition
+  - Experience level consideration
+  - Productivity metrics
+  - Overhead time allocation
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+- **Agent Configuration**
+  - Multiple operation modes (single, swarm, parallel)
+  - Advanced memory management
+  - Resource allocation strategies
+  - Performance monitoring
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+- **Results Analysis**
+  - Detailed cost breakdowns
+  - Time comparisons
+  - Token usage analytics
+  - Efficiency metrics
+  - OPEX calculations
 
-# Step 3: Install the necessary dependencies.
-npm i
+## Installation
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+1. Clone the repository:
+```bash
+git clone https://github.com/ruvnet/AiCodeCalc.git
+cd AiCodeCalc
 ```
 
-**Edit a file directly in GitHub**
+2. Install dependencies:
+```bash
+npm install
+# or
+yarn install
+# or
+bun install
+```
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+3. Start the development server:
+```bash
+npm run dev
+# or
+yarn dev
+# or
+bun dev
+```
 
-**Use GitHub Codespaces**
+## Usage
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+1. **Project Setup**
+   - Enter your project details including total lines of code and complexity
+   - Specify project timeline and requirements
 
-## What technologies are used for this project?
+2. **Configure LLM Models**
+   - Select and configure LLM models (default: GPT-4o 60%, GPT-4o-mini 40%)
+   - Adjust usage shares and cost parameters
 
-This project is built with .
+3. **Human Development Metrics**
+   - Input team size and composition
+   - Set productivity metrics and overhead factors
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+4. **Review Results**
+   - Analyze cost comparisons
+   - Review efficiency metrics
+   - Export or share analysis results
 
-## How can I deploy this project?
+## Technologies Used
 
-Simply open [Lovable](https://lovable.dev/projects/4e5007d0-80a9-4b17-a324-77e4457a0593) and click on Share -> Publish.
+- **Frontend Framework**: React with TypeScript
+- **Build Tool**: Vite
+- **UI Components**: shadcn/ui
+- **Styling**: Tailwind CSS
+- **State Management**: React Context
+- **Deployment**: Fly.io
 
-## I want to use a custom domain - is that possible?
+## Deployment
 
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+The application can be deployed using the included Dockerfile and deployment scripts:
+
+```bash
+# Build the Docker image
+docker build -t aicalc .
+
+# Deploy to fly.io
+fly deploy
+```
+
+## Development
+
+To contribute to the project:
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Submit a pull request
+
+## License
+
+[MIT License](LICENSE)
+
+## Support
+
+For support, please open an issue in the GitHub repository or contact the development team.

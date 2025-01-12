@@ -13,6 +13,13 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface LLMModel {
   id: string;
@@ -38,47 +45,51 @@ interface LLMModel {
 
 const defaultModels: LLMModel[] = [
   {
-    id: 'gpt4',
-    name: 'GPT-4 (SynthLang Optimized)',
-    inputCost: 0.03,
-    outputCost: 0.06,
-    usageShare: 60,
-    // Performance metrics based on SynthLang evaluation
-    executionTime: 2.5,
-    accuracy: 97,
-    tokenEfficiency: 93,
-    reasoningScore: 95,
-    memoryUsage: 896,
-    errorRate: 3,
-    apiCallsPerTask: 8,
-    cacheHitRate: 85,
-    // Category-specific scores
+    id: 'gpt4o',
+    name: 'GPT-4o',
+    inputCost: 0.005,
+    outputCost: 0.015,
+    usageShare: 100,
+    executionTime: 2.0,
+    accuracy: 98,
+    tokenEfficiency: 95,
+    reasoningScore: 98,
+    memoryUsage: 1024,
+    errorRate: 2,
+    apiCallsPerTask: 1.0,
+    cacheHitRate: 90,
     patternRecognition: 98,
-    contextUnderstanding: 95,
-    algorithmOptimization: 96,
+    contextUnderstanding: 98,
+    algorithmOptimization: 95,
     schemaHandling: 95,
-  },
-  {
-    id: 'gpt35',
-    name: 'GPT-3.5 Turbo (Traditional)',
-    inputCost: 0.001,
-    outputCost: 0.002,
-    usageShare: 40,
-    // Performance metrics based on traditional approach
-    executionTime: 2.1,
-    accuracy: 85,
-    tokenEfficiency: 78,
-    reasoningScore: 72,
-    memoryUsage: 512,
-    errorRate: 15,
-    apiCallsPerTask: 12,
-    cacheHitRate: 60,
-    // Category-specific scores
-    patternRecognition: 70,
-    contextUnderstanding: 72,
-    algorithmOptimization: 65,
-    schemaHandling: 70,
-  },
+  }
+];
+
+const availableModels = [
+  { id: 'gpt4o', name: 'GPT-4o', inputCost: 0.005, outputCost: 0.015 },
+  { id: 'gpt4-8k', name: 'GPT-4 (8k context)', inputCost: 0.03, outputCost: 0.06 },
+  { id: 'gpt4-32k', name: 'GPT-4 (32k context)', inputCost: 0.06, outputCost: 0.12 },
+  { id: 'gpt4o-mini', name: 'GPT-4o-mini', inputCost: 0.00015, outputCost: 0.0006 },
+  { id: 'deepseek-v3', name: 'DeepSeek V3', inputCost: 0.00027, outputCost: 0.0011 },
+  { id: 'claude-3-sonnet', name: 'Anthropic Claude 3.5 Sonnet', inputCost: 0.003, outputCost: 0.015 },
+  { id: 'o1-preview', name: 'o1-preview', inputCost: 0.015, outputCost: 0.06 },
+  { id: 'o1-mini', name: 'o1-mini', inputCost: 0.003, outputCost: 0.012 },
+  { id: 'claude-3-haiku', name: 'Claude 3 Haiku', inputCost: 0.00025, outputCost: 0.00125 },
+  { id: 'claude-3-sonnet', name: 'Claude 3 Sonnet', inputCost: 0.003, outputCost: 0.015 },
+  { id: 'claude-3-opus', name: 'Claude 3 Opus', inputCost: 0.015, outputCost: 0.075 },
+  { id: 'llama-3-405b', name: 'Llama 3.1 405B', inputCost: 0.005, outputCost: 0.016 },
+  { id: 'gpt35-4k', name: 'GPT-3.5 Turbo (4k context)', inputCost: 0.0015, outputCost: 0.002 },
+  { id: 'gpt35-16k', name: 'GPT-3.5 Turbo (16k context)', inputCost: 0.003, outputCost: 0.004 },
+  { id: 'qwen-2-72b', name: 'Qwen 2 72B', inputCost: 0.63, outputCost: 0.65 },
+  { id: 'qwen-25-7b', name: 'Qwen 2.5 7B', inputCost: 0.30, outputCost: 0.30 },
+  { id: 'qwen-25-14b', name: 'Qwen 2.5 14B', inputCost: 0.80, outputCost: 0.80 },
+  { id: 'qwen-25-72b', name: 'Qwen 2.5 72B', inputCost: 1.20, outputCost: 1.20 },
+  { id: 'qwen-25-coder-32b', name: 'Qwen 2.5 Coder 32B', inputCost: 0.80, outputCost: 0.80 },
+  { id: 'qwq-32b', name: 'QwQ 32B-Preview', inputCost: 0.15, outputCost: 0.25 },
+  { id: 'mistral-large-2411', name: 'Mistral Large (24.11)', inputCost: 2.00, outputCost: 6.00 },
+  { id: 'mistral-large-2407', name: 'Mistral Large (24.07)', inputCost: 2.00, outputCost: 6.00 },
+  { id: 'mistral-nemo', name: 'Mistral Nemo', inputCost: 0.15, outputCost: 0.15 },
+  { id: 'codestral-2405', name: 'Codestral (24.05)', inputCost: 0.20, outputCost: 0.60 }
 ];
 
 export function LLMParameters() {
@@ -223,17 +234,38 @@ export function LLMParameters() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Model Name */}
                 <div className="space-y-2">
-                  <Label htmlFor={`${model.id}-name`} className="text-terminal-bright">Name</Label>
-                  <Input
-                    id={`${model.id}-name`}
+                  <Label htmlFor={`${model.id}-name`} className="text-terminal-bright">Model</Label>
+                  <Select
                     value={model.name}
-                    onChange={(e) =>
-                      setModels(models.map(m =>
-                        m.id === model.id ? { ...m, name: e.target.value } : m
-                      ))
-                    }
-                    className="font-mono bg-background-secondary focus:ring-terminal-primary/20"
-                  />
+                    onValueChange={(value) => {
+                      const selectedModel = availableModels.find(m => m.name === value);
+                      if (selectedModel) {
+                        setModels(models.map(m =>
+                          m.id === model.id ? {
+                            ...m,
+                            name: selectedModel.name,
+                            inputCost: selectedModel.inputCost,
+                            outputCost: selectedModel.outputCost
+                          } : m
+                        ));
+                      }
+                    }}
+                  >
+                    <SelectTrigger className="font-mono bg-background-secondary focus:ring-terminal-primary/20">
+                      <SelectValue placeholder="Select model" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableModels.map((option) => (
+                        <SelectItem
+                          key={option.id}
+                          value={option.name}
+                          className="font-mono"
+                        >
+                          {option.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 {/* Usage Share */}
@@ -263,7 +295,7 @@ export function LLMParameters() {
                     id={`${model.id}-input-cost`}
                     type="number"
                     min="0"
-                    step="0.001"
+                    step="0.0001"
                     value={model.inputCost}
                     onChange={(e) =>
                       setModels(models.map(m =>
@@ -283,7 +315,7 @@ export function LLMParameters() {
                     id={`${model.id}-output-cost`}
                     type="number"
                     min="0"
-                    step="0.001"
+                    step="0.0001"
                     value={model.outputCost}
                     onChange={(e) =>
                       setModels(models.map(m =>

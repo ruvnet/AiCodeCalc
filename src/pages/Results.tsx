@@ -175,25 +175,19 @@ export function Results() {
     totalRequests: 0
   });
 
-  // Check if we have all required data
+  // Check if we have required project data
   const hasRequiredData = React.useMemo(() => {
     // Skip validation during initial render
-    if (!state.project || !state.humanMetrics || !state.llmModels) {
+    if (!state.project) {
       return true;
     }
     
     return (
       state.project.totalLoc > 0 &&
       state.project.complexity &&
-      state.llmModels.length > 0 &&
-      state.humanMetrics.hourlyRate > 0 &&
-      state.humanMetrics.locPerDay > 0
+      state.project.timeline > 0
     );
-  }, [
-    state.project,
-    state.humanMetrics,
-    state.llmModels
-  ]);
+  }, [state.project]);
 
   // Redirect if missing data after initial load
   React.useEffect(() => {
@@ -754,9 +748,9 @@ Hours × Rate × Developers × Team Overhead
       <div className="flex justify-between mt-8">
         <Button
           variant="outline"
-          onClick={() => navigate('/human')}
+          onClick={() => navigate('/project')}
         >
-          Back: Human Metrics
+          Back: Project Setup
         </Button>
         <Button
           onClick={() => dispatch({ type: 'RESET' })}
