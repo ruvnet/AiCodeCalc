@@ -56,12 +56,12 @@ export function AppLayout({ children }: AppLayoutProps) {
       <div className="relative z-10">
         <NavigationBar />
         
-        <main className="container mx-auto px-4 py-8 max-w-7xl">
+        <main className="max-w-2xl mx-auto px-4 py-8">
           {children}
         </main>
         
         <footer className="border-t border-terminal-primary/10 py-6 mt-auto bg-background/80 backdrop-blur">
-          <div className="container mx-auto px-4">
+          <div className="max-w-2xl mx-auto px-4">
             <div className="flex flex-col items-center justify-center space-y-2">
               <div className="flex items-center space-x-2">
                 <span className="text-sm font-mono text-muted-foreground">$</span>

@@ -7,6 +7,7 @@ import { AgentConfig } from '@/pages/AgentConfig';
 import { OverheadCalculator } from '@/pages/OverheadCalculator';
 import { HumanComparison } from '@/pages/HumanComparison';
 import { Results } from '@/pages/Results';
+import { Documentation } from '@/pages/Documentation';
 import { CalculatorProvider } from '@/context/CalculatorContext';
 import { Toaster } from '@/components/ui/toaster';
 
@@ -26,6 +27,7 @@ function App() {
             <Route path="/overhead" element={<OverheadCalculator />} />
             <Route path="/human" element={<HumanComparison />} />
             <Route path="/analysis" element={<Results />} />
+            <Route path="/docs" element={<Documentation />} />
             
             {/* Catch all redirect */}
             <Route path="*" element={<Navigate to="/project" replace />} />

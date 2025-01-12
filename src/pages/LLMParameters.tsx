@@ -3,8 +3,16 @@ import { useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { useCalculator } from '@/context/CalculatorContext';
 import { useToast } from '@/components/ui/use-toast';
+
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 interface LLMModel {
   id: string;
@@ -12,22 +20,64 @@ interface LLMModel {
   inputCost: number;
   outputCost: number;
   usageShare: number;
+  // Performance metrics from SynthLang evaluation
+  executionTime: number;
+  accuracy: number;
+  tokenEfficiency: number;
+  reasoningScore: number;
+  memoryUsage: number;
+  errorRate: number;
+  apiCallsPerTask: number;
+  cacheHitRate: number;
+  // Category-specific scores
+  patternRecognition: number;
+  contextUnderstanding: number;
+  algorithmOptimization: number;
+  schemaHandling: number;
 }
 
 const defaultModels: LLMModel[] = [
   {
     id: 'gpt4',
-    name: 'GPT-4',
-    inputCost: 0.03,    // $0.03 per 1K input tokens
-    outputCost: 0.06,   // $0.06 per 1K output tokens
-    usageShare: 60,     // 60% of code generation
+    name: 'GPT-4 (SynthLang Optimized)',
+    inputCost: 0.03,
+    outputCost: 0.06,
+    usageShare: 60,
+    // Performance metrics based on SynthLang evaluation
+    executionTime: 2.5,
+    accuracy: 97,
+    tokenEfficiency: 93,
+    reasoningScore: 95,
+    memoryUsage: 896,
+    errorRate: 3,
+    apiCallsPerTask: 8,
+    cacheHitRate: 85,
+    // Category-specific scores
+    patternRecognition: 98,
+    contextUnderstanding: 95,
+    algorithmOptimization: 96,
+    schemaHandling: 95,
   },
   {
     id: 'gpt35',
-    name: 'GPT-3.5 Turbo',
-    inputCost: 0.001,   // $0.001 per 1K input tokens
-    outputCost: 0.002,  // $0.002 per 1K output tokens
-    usageShare: 40,     // 40% of code generation
+    name: 'GPT-3.5 Turbo (Traditional)',
+    inputCost: 0.001,
+    outputCost: 0.002,
+    usageShare: 40,
+    // Performance metrics based on traditional approach
+    executionTime: 2.1,
+    accuracy: 85,
+    tokenEfficiency: 78,
+    reasoningScore: 72,
+    memoryUsage: 512,
+    errorRate: 15,
+    apiCallsPerTask: 12,
+    cacheHitRate: 60,
+    // Category-specific scores
+    patternRecognition: 70,
+    contextUnderstanding: 72,
+    algorithmOptimization: 65,
+    schemaHandling: 70,
   },
 ];
 
@@ -44,6 +94,19 @@ export function LLMParameters() {
       inputCost: m.inputCost,
       outputCost: m.outputCost,
       usageShare: m.usageShare,
+      // Default performance metrics for existing models
+      executionTime: 2.5,
+      accuracy: 85,
+      tokenEfficiency: 78,
+      reasoningScore: 72,
+      memoryUsage: 512,
+      errorRate: 15,
+      apiCallsPerTask: 12,
+      cacheHitRate: 60,
+      patternRecognition: 70,
+      contextUnderstanding: 72,
+      algorithmOptimization: 65,
+      schemaHandling: 70,
     })) : defaultModels
   );
 
@@ -52,12 +115,7 @@ export function LLMParameters() {
     if (state.llmModels.length === 0) {
       dispatch({
         type: 'SET_LLM_MODELS',
-        payload: defaultModels.map(({ name, inputCost, outputCost, usageShare }) => ({
-          name,
-          inputCost,
-          outputCost,
-          usageShare,
-        })),
+        payload: defaultModels,
       });
     }
   }, []);
@@ -76,15 +134,10 @@ export function LLMParameters() {
       return;
     }
 
-    // Update context with normalized models
+    // Update context with all model data
     dispatch({
       type: 'SET_LLM_MODELS',
-      payload: models.map(m => ({
-        name: m.name,
-        inputCost: m.inputCost,
-        outputCost: m.outputCost,
-        usageShare: m.usageShare,
-      })),
+      payload: models,
     });
 
     navigate('/agent');
@@ -100,6 +153,19 @@ export function LLMParameters() {
         inputCost: 0.001,
         outputCost: 0.002,
         usageShare: 0,
+        // Default performance metrics for new models
+        executionTime: 2.1,
+        accuracy: 85,
+        tokenEfficiency: 78,
+        reasoningScore: 72,
+        memoryUsage: 512,
+        errorRate: 15,
+        apiCallsPerTask: 12,
+        cacheHitRate: 60,
+        patternRecognition: 70,
+        contextUnderstanding: 72,
+        algorithmOptimization: 65,
+        schemaHandling: 70,
       },
     ]);
   };
@@ -118,6 +184,17 @@ export function LLMParameters() {
 
   return (
     <div className="max-w-2xl mx-auto">
+      <Card className="mb-8">
+        <CardHeader>
+          <h2 className="text-xl font-mono font-bold text-terminal-bright">Model Configuration</h2>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground">
+            Configure the LLM models that will be used in your development workflow. Define cost parameters and usage distribution across different models to optimize your token budget and performance requirements.
+          </p>
+        </CardContent>
+      </Card>
+
       <h1 className="text-2xl font-mono font-bold mb-6 matrix-text">
         LLM Configuration
       </h1>
@@ -217,6 +294,235 @@ export function LLMParameters() {
                   />
                 </div>
               </div>
+
+              {/* Performance Metrics Accordion */}
+              <Accordion type="single" collapsible className="mt-4">
+                <AccordionItem value="performance">
+                  <AccordionTrigger className="text-terminal-bright hover:bg-background-secondary px-2">
+                    Performance Metrics
+                  </AccordionTrigger>
+                  <AccordionContent className="px-2 py-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Core Metrics */}
+                      <div className="space-y-4">
+                        <h4 className="font-mono text-terminal-bright">Core Metrics</h4>
+                        
+                        <div className="space-y-2">
+                          <Label htmlFor={`${model.id}-execution-time`}>Execution Time (s)</Label>
+                          <Input
+                            id={`${model.id}-execution-time`}
+                            type="number"
+                            step="0.1"
+                            value={model.executionTime}
+                            onChange={(e) =>
+                              setModels(models.map(m =>
+                                m.id === model.id ? { ...m, executionTime: parseFloat(e.target.value) || 0 } : m
+                              ))
+                            }
+                            className="font-mono bg-background-secondary"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor={`${model.id}-accuracy`}>Accuracy (%)</Label>
+                          <Input
+                            id={`${model.id}-accuracy`}
+                            type="number"
+                            min="0"
+                            max="100"
+                            value={model.accuracy}
+                            onChange={(e) =>
+                              setModels(models.map(m =>
+                                m.id === model.id ? { ...m, accuracy: parseFloat(e.target.value) || 0 } : m
+                              ))
+                            }
+                            className="font-mono bg-background-secondary"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor={`${model.id}-token-efficiency`}>Token Efficiency (%)</Label>
+                          <Input
+                            id={`${model.id}-token-efficiency`}
+                            type="number"
+                            min="0"
+                            max="100"
+                            value={model.tokenEfficiency}
+                            onChange={(e) =>
+                              setModels(models.map(m =>
+                                m.id === model.id ? { ...m, tokenEfficiency: parseFloat(e.target.value) || 0 } : m
+                              ))
+                            }
+                            className="font-mono bg-background-secondary"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor={`${model.id}-reasoning-score`}>Reasoning Score (%)</Label>
+                          <Input
+                            id={`${model.id}-reasoning-score`}
+                            type="number"
+                            min="0"
+                            max="100"
+                            value={model.reasoningScore}
+                            onChange={(e) =>
+                              setModels(models.map(m =>
+                                m.id === model.id ? { ...m, reasoningScore: parseFloat(e.target.value) || 0 } : m
+                              ))
+                            }
+                            className="font-mono bg-background-secondary"
+                          />
+                        </div>
+                      </div>
+
+                      {/* System Metrics */}
+                      <div className="space-y-4">
+                        <h4 className="font-mono text-terminal-bright">System Metrics</h4>
+                        
+                        <div className="space-y-2">
+                          <Label htmlFor={`${model.id}-memory-usage`}>Memory Usage (MB)</Label>
+                          <Input
+                            id={`${model.id}-memory-usage`}
+                            type="number"
+                            min="0"
+                            value={model.memoryUsage}
+                            onChange={(e) =>
+                              setModels(models.map(m =>
+                                m.id === model.id ? { ...m, memoryUsage: parseFloat(e.target.value) || 0 } : m
+                              ))
+                            }
+                            className="font-mono bg-background-secondary"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor={`${model.id}-error-rate`}>Error Rate (%)</Label>
+                          <Input
+                            id={`${model.id}-error-rate`}
+                            type="number"
+                            min="0"
+                            max="100"
+                            value={model.errorRate}
+                            onChange={(e) =>
+                              setModels(models.map(m =>
+                                m.id === model.id ? { ...m, errorRate: parseFloat(e.target.value) || 0 } : m
+                              ))
+                            }
+                            className="font-mono bg-background-secondary"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor={`${model.id}-api-calls`}>API Calls per Task</Label>
+                          <Input
+                            id={`${model.id}-api-calls`}
+                            type="number"
+                            min="0"
+                            value={model.apiCallsPerTask}
+                            onChange={(e) =>
+                              setModels(models.map(m =>
+                                m.id === model.id ? { ...m, apiCallsPerTask: parseFloat(e.target.value) || 0 } : m
+                              ))
+                            }
+                            className="font-mono bg-background-secondary"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor={`${model.id}-cache-hit-rate`}>Cache Hit Rate (%)</Label>
+                          <Input
+                            id={`${model.id}-cache-hit-rate`}
+                            type="number"
+                            min="0"
+                            max="100"
+                            value={model.cacheHitRate}
+                            onChange={(e) =>
+                              setModels(models.map(m =>
+                                m.id === model.id ? { ...m, cacheHitRate: parseFloat(e.target.value) || 0 } : m
+                              ))
+                            }
+                            className="font-mono bg-background-secondary"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Category Scores */}
+                      <div className="space-y-4 md:col-span-2">
+                        <h4 className="font-mono text-terminal-bright">Category Scores (%)</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor={`${model.id}-pattern-recognition`}>Pattern Recognition</Label>
+                            <Input
+                              id={`${model.id}-pattern-recognition`}
+                              type="number"
+                              min="0"
+                              max="100"
+                              value={model.patternRecognition}
+                              onChange={(e) =>
+                                setModels(models.map(m =>
+                                  m.id === model.id ? { ...m, patternRecognition: parseFloat(e.target.value) || 0 } : m
+                                ))
+                              }
+                              className="font-mono bg-background-secondary"
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor={`${model.id}-context-understanding`}>Context Understanding</Label>
+                            <Input
+                              id={`${model.id}-context-understanding`}
+                              type="number"
+                              min="0"
+                              max="100"
+                              value={model.contextUnderstanding}
+                              onChange={(e) =>
+                                setModels(models.map(m =>
+                                  m.id === model.id ? { ...m, contextUnderstanding: parseFloat(e.target.value) || 0 } : m
+                                ))
+                              }
+                              className="font-mono bg-background-secondary"
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor={`${model.id}-algorithm-optimization`}>Algorithm Optimization</Label>
+                            <Input
+                              id={`${model.id}-algorithm-optimization`}
+                              type="number"
+                              min="0"
+                              max="100"
+                              value={model.algorithmOptimization}
+                              onChange={(e) =>
+                                setModels(models.map(m =>
+                                  m.id === model.id ? { ...m, algorithmOptimization: parseFloat(e.target.value) || 0 } : m
+                                ))
+                              }
+                              className="font-mono bg-background-secondary"
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor={`${model.id}-schema-handling`}>Schema Handling</Label>
+                            <Input
+                              id={`${model.id}-schema-handling`}
+                              type="number"
+                              min="0"
+                              max="100"
+                              value={model.schemaHandling}
+                              onChange={(e) =>
+                                setModels(models.map(m =>
+                                  m.id === model.id ? { ...m, schemaHandling: parseFloat(e.target.value) || 0 } : m
+                                ))
+                              }
+                              className="font-mono bg-background-secondary"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
             </div>
           ))}
 

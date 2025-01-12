@@ -1,17 +1,31 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, BookOpen, PlayCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useMobile } from '@/hooks/use-mobile';
 
-const navItems = [
-  { path: '/project', label: 'Project Setup' },
-  { path: '/llm', label: 'LLM Config' },
-  { path: '/agent', label: 'Agent Config' },
+interface NavItem {
+  path: string;
+  label: string;
+  icon?: React.ReactNode;
+}
+
+const navItems: NavItem[] = [
+  { 
+    path: '/project', 
+    label: 'Start',
+    icon: <PlayCircle className="h-4 w-4 inline-block mr-1" />
+  },
+  { path: '/llm', label: 'LLM' },
+  { path: '/agent', label: 'Agent' },
   { path: '/overhead', label: 'Overhead' },
-  { path: '/human', label: 'Human Dev' },
-  { path: '/analysis', label: 'Analysis' },
-] as const;
+  { path: '/human', label: 'Human' },
+  { 
+    path: '/docs', 
+    label: 'Docs',
+    icon: <BookOpen className="h-4 w-4 inline-block mr-1" />
+  },
+];
 
 export function NavigationBar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -21,7 +35,7 @@ export function NavigationBar() {
 
   return (
     <nav className="border-b border-terminal-primary/10 bg-background/80 backdrop-blur">
-      <div className="container mx-auto px-4 max-w-7xl">
+      <div className="max-w-2xl mx-auto px-4">
         <div className="flex h-14 items-center justify-between">
           {/* Logo */}
           <NavLink 
@@ -59,7 +73,7 @@ export function NavigationBar() {
                 : 'flex items-center space-x-1'
             }`}
           >
-            {navItems.map(({ path, label }) => (
+            {navItems.map(({ path, label, icon }) => (
               <NavLink
                 key={path}
                 to={path}
@@ -76,7 +90,7 @@ export function NavigationBar() {
                   }`
                 }
               >
-                {label}
+                {icon}{label}
               </NavLink>
             ))}
           </div>

@@ -2,6 +2,12 @@ import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useCalculator } from '@/context/CalculatorContext';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 function formatCurrency(amount: number): string {
   return new Intl.NumberFormat('en-US', {
@@ -16,15 +22,18 @@ function formatNumber(num: number): string {
 }
 
 function formatDuration(hours: number): string {
-  if (hours < 1) {
-    return `${Math.round(hours * 60)} minutes`;
-  } else if (hours < 24) {
-    return `${Math.round(hours)} hours`;
-  } else {
-    const days = Math.floor(hours / 24);
-    const remainingHours = Math.round(hours % 24);
-    return `${days} days${remainingHours > 0 ? ` ${remainingHours} hours` : ''}`;
-  }
+  const totalSeconds = hours * 3600; // Convert hours to seconds
+  
+  const days = Math.floor(totalSeconds / (24 * 3600));
+  const remainingHours = Math.floor((totalSeconds % (24 * 3600)) / 3600);
+  const remainingMinutes = Math.floor((totalSeconds % 3600) / 60);
+
+  const parts = [];
+  if (days > 0) parts.push(`${days}d`);
+  if (remainingHours > 0) parts.push(`${remainingHours}h`);
+  if (remainingMinutes > 0) parts.push(`${remainingMinutes}m`);
+
+  return parts.join(' ') || '0m';
 }
 
 function calculateTokensPerLine(complexity: string): number {
@@ -47,25 +56,96 @@ interface AgentConfig {
 function calculateParallelizationFactor(config: AgentConfig): number {
   const { mode, agentCount, parallelTasks, swarmEfficiency } = config;
   
+  // Base parallelization based on mode
+  let baseFactor: number;
   switch (mode) {
     case 'single':
-      return 1;
+      baseFactor = 1;
+      break;
     case 'parallel':
-      return Math.min(agentCount, parallelTasks);
-    case 'swarm':
-      return agentCount * swarmEfficiency;
+      // Parallel mode gets diminishing returns after certain point
+      baseFactor = Math.min(agentCount, parallelTasks) * 0.8; // 80% efficiency
+      break;
+    case 'swarm': {
+      // Swarm mode benefits more from additional agents due to collaboration
+      const maxTasks = parallelTasks * 1.5; // Can handle 50% more tasks
+      baseFactor = Math.min(agentCount, maxTasks) * swarmEfficiency;
+      break;
+    }
     case 'concurrent':
-      return Math.min(agentCount, parallelTasks) * 0.8; // 20% coordination overhead
+      // Concurrent mode balances between parallel and swarm
+      baseFactor = Math.min(agentCount, parallelTasks * 1.2) * 0.9; // 90% efficiency, 20% more tasks
+      break;
     default:
-      return 1;
+      baseFactor = 1;
   }
+
+  // Apply diminishing returns for large agent counts
+  const diminishingFactor = 1 / (1 + Math.log10(Math.max(agentCount, 1)));
+  return baseFactor * (0.5 + 0.5 * diminishingFactor); // Blend linear and diminishing factors
 }
 
 export function Results() {
   const navigate = useNavigate();
   const { state, dispatch } = useCalculator();
+  const [calculationDetails, setCalculationDetails] = React.useState({
+    // Overhead factors
+    compositeOverhead: 1,
+    coordinationOverhead: 1,
+    errorMultiplier: 1,
+    teamOverhead: 1,
+    
+    // Processing rates
+    baseTokensPerMinute: 500,
+    baseTokensPerHour: 30000,
+    baseTokensPerDay: 720000,
+    effectiveTokensPerHour: 30000,
+    effectiveTokensPerDay: 720000,
+    
+    // Token calculations
+    totalBaseTokens: 0,
+    totalEffectiveTokens: 0,
+    
+    // Time calculations
+    tokenProcessingHours: 0,
+    requestProcessingHours: 0,
+    totalRequests: 0
+  });
+
+  // Check if we have all required data
+  const hasRequiredData = React.useMemo(() => {
+    // Skip validation during initial render
+    if (!state.project || !state.humanMetrics || !state.llmModels) {
+      return true;
+    }
+    
+    return (
+      state.project.totalLoc > 0 &&
+      state.project.complexity &&
+      state.llmModels.length > 0 &&
+      state.humanMetrics.hourlyRate > 0 &&
+      state.humanMetrics.locPerDay > 0
+    );
+  }, [
+    state.project,
+    state.humanMetrics,
+    state.llmModels
+  ]);
+
+  // Redirect if missing data after initial load
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!hasRequiredData) {
+        navigate('/project');
+      }
+    }, 1000); // Give time for context to load
+
+    return () => clearTimeout(timer);
+  }, [hasRequiredData, navigate]);
 
   useEffect(() => {
+    if (!hasRequiredData) return;
+
     // Calculate total costs and update results
     const tokensPerLine = calculateTokensPerLine(state.project.complexity);
     const totalTokens = state.project.totalLoc * tokensPerLine;
@@ -100,25 +180,99 @@ export function Results() {
       );
     }, 0) * compositeOverhead * coordinationOverhead * errorMultiplier;
 
-    // Calculate time estimates
-    const baseTokensPerHour = 100000; // Base tokens processed per hour
+    // Calculate time estimates for 24/7 operation
+    const baseTokensPerMinute = 500;
+    const baseTokensPerHour = baseTokensPerMinute * 60;
     const effectiveTokensPerHour = baseTokensPerHour * parallelFactor;
     const totalTokensWithOverhead = totalTokens * compositeOverhead * coordinationOverhead;
-    const llmDuration = totalTokensWithOverhead / effectiveTokensPerHour;
+    
+    // Calculate continuous 24/7 processing time
+    const tokenProcessingHours = totalTokensWithOverhead / effectiveTokensPerHour;
+    
+    // Calculate request-based processing time
+    const avgRequestTime = 5; // minutes per request
+    const linesPerRequest = 50;
+    const estimatedRequests = Math.ceil(state.project.totalLoc / linesPerRequest);
+    const requestProcessingHours = (estimatedRequests * avgRequestTime) / 60;
+    
+    // Final LLM duration is max of token processing and request processing time
+    const llmDuration = Math.max(tokenProcessingHours, requestProcessingHours);
 
     // Calculate human costs
-    const hoursPerDay = 8;
-    const daysRequired = state.project.totalLoc / 
-      (state.humanMetrics.locPerDay * state.humanMetrics.developers);
-    const humanDuration = daysRequired * hoursPerDay;
+    // Calculate total overhead percentage
+    const totalOverheadPercentage = (state.humanMetrics.meetingsPerWeek / 40) + // Convert meetings to percentage
+      state.humanMetrics.codeReviewTime +
+      state.humanMetrics.documentationTime +
+      state.humanMetrics.qaTime +
+      state.humanMetrics.technicalDebtTime;
+    
+    // Add team coordination overhead
+    const teamOverhead = state.humanMetrics.developers > 1 
+      ? 1 + (Math.log2(state.humanMetrics.developers) * 0.1) // 10% overhead per doubling of team size
+      : 1;
+    
+    // Calculate effective lines per day considering all overheads
+    const effectiveLinesPerDay = (state.humanMetrics.locPerDay * state.humanMetrics.developers * (1 - totalOverheadPercentage)) / teamOverhead;
+    
+    // Calculate total working days needed
+    const workingDays = state.project.totalLoc / effectiveLinesPerDay;
+    const humanDuration = workingDays * 8; // Store duration in hours for cost calculation
+    
+    // Calculate total cost including overhead
     const humanCost = humanDuration * state.humanMetrics.hourlyRate * 
-      state.humanMetrics.developers;
+      state.humanMetrics.developers * teamOverhead;
+
+    // Store calculation details for display
+    setCalculationDetails({
+      // Overhead factors
+      compositeOverhead,
+      coordinationOverhead,
+      errorMultiplier,
+      teamOverhead,
+      
+      // Processing rates
+      baseTokensPerMinute: 500,
+      baseTokensPerHour: baseTokensPerHour,
+      baseTokensPerDay: baseTokensPerHour * 24,
+      effectiveTokensPerHour: effectiveTokensPerHour,
+      effectiveTokensPerDay: effectiveTokensPerHour * 24,
+      
+      // Token calculations
+      totalBaseTokens: totalTokens,
+      totalEffectiveTokens: totalTokensWithOverhead,
+      
+      // Time calculations
+      tokenProcessingHours,
+      requestProcessingHours,
+      totalRequests: Math.ceil(state.project.totalLoc / 50)
+    });
 
     // Update results
+    // Calculate pro-rated monthly OPEX costs
+    const daysInMonth = 30;
+    const projectDurationDays = llmDuration / 24; // Convert hours to days
+    const proRatedFactor = projectDurationDays / daysInMonth;
+    
+    const monthlyOpex = (
+      (state.overheads.infrastructureCost || 0) +
+      (state.overheads.apiServicesCost || 0) +
+      (state.overheads.monitoringCost || 0) +
+      (state.overheads.securityCost || 0) +
+      (state.overheads.backupCost || 0) +
+      (state.overheads.networkingCost || 0) +
+      (state.overheads.licensingCost || 0) +
+      (state.overheads.maintenanceCost || 0)
+    );
+
+    const operationalCost = monthlyOpex * proRatedFactor;
+    const totalAgentCost = llmCost + operationalCost;
+
     dispatch({
       type: 'UPDATE_RESULTS',
       payload: {
         llmCost,
+        operationalCost,
+        totalAgentCost,
         humanCost,
         llmDuration,
         humanDuration,
@@ -131,14 +285,35 @@ export function Results() {
           effectiveParallelism: parallelFactor,
           coordinationCost: coordinationOverhead,
           errorRate: errorMultiplier,
-          timeReduction: 1 / parallelFactor,
-          costIncrease: coordinationOverhead * errorMultiplier,
+          timeReduction: (humanDuration - llmDuration) / humanDuration, // Actual time reduction percentage
+          costIncrease: (totalAgentCost / humanCost) - 1, // Actual cost increase/decrease percentage
+        },
+        opexMetrics: {
+          monthlyOpex,
+          proRatedFactor,
+          projectDurationDays,
         },
       },
     });
-  }, []);
+  }, [
+    state.project.totalLoc,
+    state.project.complexity,
+    state.llmModels,
+    state.overheads,
+    state.agentConfig,
+    state.humanMetrics,
+    hasRequiredData
+  ]);
 
-  const agentMetrics = state.results.agentMetrics;
+  const agentMetrics = state.results.agentMetrics || {
+    effectiveParallelism: 1,
+    timeReduction: 0,
+    costIncrease: 0
+  };
+
+  if (!hasRequiredData || !state.results.agentMetrics) {
+    return null;
+  }
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -147,15 +322,19 @@ export function Results() {
       </h1>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* LLM Development */}
+        {/* Agent Operational Costs */}
         <div className="bg-background-secondary shadow-lg p-6">
-          <h2 className="text-xl font-mono matrix-text mb-4">LLM Development</h2>
+          <h2 className="text-xl font-mono matrix-text mb-4">Agent Operational Costs</h2>
           <div className="space-y-4">
             <div>
               <p className="text-sm text-muted-foreground">Total Cost</p>
               <p className="text-2xl font-mono text-terminal-bright">
-                {formatCurrency(state.results.llmCost)}
+                {formatCurrency(state.results.totalAgentCost)}
               </p>
+              <div className="text-xs text-muted-foreground mt-1">
+                <p>LLM API: {formatCurrency(state.results.llmCost)}</p>
+                <p>OPEX: {formatCurrency(state.results.operationalCost)} ({((state.results.opexMetrics?.proRatedFactor || 0) * 100).toFixed(1)}% of ${formatCurrency(state.results.opexMetrics?.monthlyOpex || 0)}/mo)</p>
+              </div>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Estimated Duration</p>
@@ -194,7 +373,33 @@ export function Results() {
             <div>
               <p className="text-sm text-muted-foreground">Team Size</p>
               <p className="text-base font-mono">
-                {state.humanMetrics.developers} developer{state.humanMetrics.developers > 1 ? 's' : ''}
+                {state.humanMetrics.developers} developer{state.humanMetrics.developers > 1 ? 's' : ''} ({state.humanMetrics.experienceLevel} level)
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Productivity</p>
+              <p className="text-base font-mono">
+                {state.humanMetrics.locPerDay} LOC/day per developer
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Time Allocation</p>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <p className="font-mono">Meetings: {state.humanMetrics.meetingsPerWeek || 0}h/week ({((state.humanMetrics.meetingsPerWeek || 0) / 40 * 100).toFixed(1)}%)</p>
+                <p className="font-mono">Code Review: {((state.humanMetrics.codeReviewTime || 0) * 100).toFixed(1)}%</p>
+                <p className="font-mono">Documentation: {((state.humanMetrics.documentationTime || 0) * 100).toFixed(1)}%</p>
+                <p className="font-mono">QA: {((state.humanMetrics.qaTime || 0) * 100).toFixed(1)}%</p>
+                <p className="font-mono">Tech Debt: {((state.humanMetrics.technicalDebtTime || 0) * 100).toFixed(1)}%</p>
+              </div>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Total Overhead</p>
+              <p className="text-xl font-mono text-terminal-bright">
+                {(((state.humanMetrics.meetingsPerWeek || 0) / 40 + // Convert meetings to percentage
+                   (state.humanMetrics.codeReviewTime || 0) +
+                   (state.humanMetrics.documentationTime || 0) +
+                   (state.humanMetrics.qaTime || 0) +
+                   (state.humanMetrics.technicalDebtTime || 0)) * 100).toFixed(1)}%
               </p>
             </div>
           </div>
@@ -214,13 +419,13 @@ export function Results() {
               <div>
                 <p className="text-sm text-muted-foreground">Time Reduction</p>
                 <p className="text-2xl font-mono text-terminal-bright">
-                  {Math.round((1 - agentMetrics.timeReduction) * 100)}%
+                  {Math.round(agentMetrics.timeReduction * 100)}%
                 </p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Cost Impact</p>
                 <p className="text-2xl font-mono text-terminal-bright">
-                  {Math.round((agentMetrics.costIncrease - 1) * 100)}%
+                  {Math.round(agentMetrics.costIncrease * -100)}%
                 </p>
               </div>
             </div>
@@ -234,7 +439,7 @@ export function Results() {
             <div>
               <p className="text-sm text-muted-foreground">Cost Savings</p>
               <p className="text-2xl font-mono text-terminal-bright">
-                {formatCurrency(state.results.humanCost - state.results.llmCost)}
+                {formatCurrency(state.results.humanCost - state.results.totalAgentCost)}
               </p>
             </div>
             <div>
@@ -246,11 +451,212 @@ export function Results() {
             <div>
               <p className="text-sm text-muted-foreground">Cost Reduction</p>
               <p className="text-2xl font-mono text-terminal-bright">
-                {Math.round((1 - state.results.llmCost / state.results.humanCost) * 100)}%
+                {Math.round((1 - state.results.totalAgentCost / state.results.humanCost) * 100)}%
               </p>
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Detailed Metrics */}
+      <div className="mt-8 space-y-6">
+        <h2 className="text-xl font-mono font-bold matrix-text">Detailed Metrics</h2>
+        
+        {/* Token Metrics */}
+        <div className="bg-background-secondary shadow-lg p-6">
+          <h3 className="text-lg font-mono matrix-text mb-4">Token Analysis</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <p className="text-sm text-muted-foreground">Tokens per Line</p>
+              <p className="text-xl font-mono text-terminal-bright">
+                {calculateTokensPerLine(state.project.complexity)}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Total Tokens</p>
+              <p className="text-xl font-mono text-terminal-bright">
+                {formatNumber(state.results.tokenUsage.input + state.results.tokenUsage.output)}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Input/Output Ratio</p>
+              <p className="text-xl font-mono text-terminal-bright">30/70</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Performance Metrics */}
+        <div className="bg-background-secondary shadow-lg p-6">
+          <h3 className="text-lg font-mono matrix-text mb-4">Performance Analysis</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <p className="text-sm text-muted-foreground">Processing Rate</p>
+              <p className="text-xl font-mono text-terminal-bright">
+                {formatNumber(30000)} tokens/hour
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Effective Rate</p>
+              <p className="text-xl font-mono text-terminal-bright">
+                {formatNumber(30000 * (agentMetrics?.effectiveParallelism || 1))} tokens/hour
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Lines per Hour</p>
+              <p className="text-xl font-mono text-terminal-bright">
+                {formatNumber(30000 / calculateTokensPerLine(state.project.complexity))}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Efficiency Metrics */}
+        <div className="bg-background-secondary shadow-lg p-6">
+          <h3 className="text-lg font-mono matrix-text mb-4">Efficiency Analysis</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <p className="text-sm text-muted-foreground">Cost per Line</p>
+              <p className="text-xl font-mono text-terminal-bright">
+                {formatCurrency(state.results.totalAgentCost / state.project.totalLoc)}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Cost per Token</p>
+              <p className="text-xl font-mono text-terminal-bright">
+                {formatCurrency(state.results.totalAgentCost / (state.results.tokenUsage.input + state.results.tokenUsage.output))}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Lines per Dollar</p>
+              <p className="text-xl font-mono text-terminal-bright">
+                {formatNumber(state.project.totalLoc / state.results.totalAgentCost)}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Calculation Details */}
+      <div className="mt-8">
+        <Accordion type="single" collapsible className="bg-background-secondary">
+          <AccordionItem value="calculations">
+            <AccordionTrigger className="px-6 text-lg font-mono matrix-text">
+              Calculation Details
+            </AccordionTrigger>
+            <AccordionContent className="px-6 space-y-4">
+              <div>
+                <h4 className="font-mono text-terminal-bright mb-2">Token Calculations</h4>
+                <pre className="text-sm bg-background-primary p-4 rounded">
+                  {`Total Tokens = Lines of Code × Tokens per Line
+${state.project.totalLoc} × ${calculateTokensPerLine(state.project.complexity)} = ${formatNumber(state.project.totalLoc * calculateTokensPerLine(state.project.complexity))} tokens
+
+Input Tokens (30%) = ${formatNumber(state.results.tokenUsage.input)}
+Output Tokens (70%) = ${formatNumber(state.results.tokenUsage.output)}`}
+                </pre>
+              </div>
+
+              <div>
+                <h4 className="font-mono text-terminal-bright mb-2">Duration Calculations (24/7 Operation)</h4>
+                <pre className="text-sm bg-background-primary p-4 rounded">
+                  {`1. Base Processing Rates:
+Per Minute = ${formatNumber(500)} tokens/minute
+Per Hour = ${formatNumber(500 * 60)} tokens/hour
+Per Day (24/7) = ${formatNumber(500 * 60 * 24)} tokens/day
+
+2. Parallelization Impact:
+Parallel Factor = ${agentMetrics.effectiveParallelism.toFixed(2)}x
+Effective Hourly Rate = ${formatNumber(30000 * agentMetrics.effectiveParallelism)} tokens/hour
+Effective Daily Rate = ${formatNumber(30000 * 24 * agentMetrics.effectiveParallelism)} tokens/day
+
+3. Total Tokens to Process:
+Base Tokens = ${formatNumber(state.results.tokenUsage.input + state.results.tokenUsage.output)}
+Overhead Multipliers:
+- Composite = ${calculationDetails.compositeOverhead.toFixed(2)}x
+- Coordination = ${calculationDetails.coordinationOverhead.toFixed(2)}x
+Total Effective Tokens = ${formatNumber((state.results.tokenUsage.input + state.results.tokenUsage.output) * calculationDetails.compositeOverhead * calculationDetails.coordinationOverhead)}
+
+4. Token Processing Time (24/7):
+Total Hours = ${formatNumber((state.results.tokenUsage.input + state.results.tokenUsage.output) * calculationDetails.compositeOverhead * calculationDetails.coordinationOverhead)} tokens ÷ ${formatNumber(30000 * agentMetrics.effectiveParallelism)} tokens/hour
+= ${((state.results.tokenUsage.input + state.results.tokenUsage.output) * calculationDetails.compositeOverhead * calculationDetails.coordinationOverhead / (30000 * agentMetrics.effectiveParallelism)).toFixed(2)} hours
+= ${formatDuration(((state.results.tokenUsage.input + state.results.tokenUsage.output) * calculationDetails.compositeOverhead * calculationDetails.coordinationOverhead) / (30000 * agentMetrics.effectiveParallelism))}
+
+5. Request Processing Time:
+Total Requests = ${formatNumber(Math.ceil(state.project.totalLoc / 50))} (${state.project.totalLoc} lines ÷ 50 lines/request)
+Processing Time = ${formatNumber(Math.ceil(state.project.totalLoc / 50))} requests × 5 minutes
+= ${formatDuration(Math.ceil(state.project.totalLoc / 50) * 5 / 60)}
+
+6. Final Duration (Maximum):
+Token Processing Time: ${formatDuration(((state.results.tokenUsage.input + state.results.tokenUsage.output) * calculationDetails.compositeOverhead * calculationDetails.coordinationOverhead) / (30000 * agentMetrics.effectiveParallelism))}
+Request Processing Time: ${formatDuration(Math.ceil(state.project.totalLoc / 50) * 5 / 60)}
+Final Duration = ${formatDuration(state.results.llmDuration)}
+(Continuous 24/7 Operation)`}
+                </pre>
+              </div>
+
+              <div>
+                <h4 className="font-mono text-terminal-bright mb-2">Cost Calculations</h4>
+                <pre className="text-sm bg-background-primary p-4 rounded">
+                  {`1. LLM Costs:
+Base Cost = Σ(model_cost × token_share)
+Overhead = ${calculationDetails.compositeOverhead.toFixed(2)} (composite) × ${calculationDetails.coordinationOverhead.toFixed(2)} (coordination) × ${calculationDetails.errorMultiplier.toFixed(2)} (error)
+Final Cost = ${formatCurrency(state.results.llmCost)}
+
+2. Human Development Costs:
+Base Metrics:
+- Hourly Rate: $${state.humanMetrics.hourlyRate}
+- Team Size: ${state.humanMetrics.developers} developer(s)
+- Experience Level: ${state.humanMetrics.experienceLevel}
+- Base Productivity: ${state.humanMetrics.locPerDay} LOC/day/developer
+
+Time Allocation (40-hour week):
+- Meetings: ${state.humanMetrics.meetingsPerWeek}h = ${(state.humanMetrics.meetingsPerWeek / 40 * 100).toFixed(1)}%
+- Code Review: ${(state.humanMetrics.codeReviewTime * 100).toFixed(1)}%
+- Documentation: ${(state.humanMetrics.documentationTime * 100).toFixed(1)}%
+- QA: ${(state.humanMetrics.qaTime * 100).toFixed(1)}%
+- Technical Debt: ${(state.humanMetrics.technicalDebtTime * 100).toFixed(1)}%
+Total Overhead: ${(((state.humanMetrics.meetingsPerWeek / 40) + state.humanMetrics.codeReviewTime + state.humanMetrics.documentationTime + state.humanMetrics.qaTime + state.humanMetrics.technicalDebtTime) * 100).toFixed(1)}%
+
+Team Coordination:
+- Base Team Overhead: ${calculationDetails.teamOverhead.toFixed(2)}x
+- Onboarding Time: ${state.humanMetrics.onboardingWeeks} weeks
+
+Productivity Calculations:
+1. Base Productivity: ${state.humanMetrics.locPerDay} LOC/day/developer
+2. Effective Time Available:
+   - Weekly Hours: 40 hours
+   - Meeting Time: -${state.humanMetrics.meetingsPerWeek} hours (${(state.humanMetrics.meetingsPerWeek / 40 * 100).toFixed(1)}%)
+   - Code Review: -${(state.humanMetrics.codeReviewTime * 100).toFixed(1)}%
+   - Documentation: -${(state.humanMetrics.documentationTime * 100).toFixed(1)}%
+   - QA: -${(state.humanMetrics.qaTime * 100).toFixed(1)}%
+   - Technical Debt: -${(state.humanMetrics.technicalDebtTime * 100).toFixed(1)}%
+   Total Overhead: ${(((state.humanMetrics.meetingsPerWeek / 40) + state.humanMetrics.codeReviewTime + state.humanMetrics.documentationTime + state.humanMetrics.qaTime + state.humanMetrics.technicalDebtTime) * 100).toFixed(1)}%
+   Effective Time: ${(100 - ((state.humanMetrics.meetingsPerWeek / 40) + state.humanMetrics.codeReviewTime + state.humanMetrics.documentationTime + state.humanMetrics.qaTime + state.humanMetrics.technicalDebtTime) * 100).toFixed(1)}%
+
+3. Team Productivity:
+   - Raw Team Output: ${state.humanMetrics.locPerDay} LOC × ${state.humanMetrics.developers} developers = ${state.humanMetrics.locPerDay * state.humanMetrics.developers} LOC/day
+   - Team Overhead: ${calculationDetails.teamOverhead.toFixed(2)}x (${((calculationDetails.teamOverhead - 1) * 100).toFixed(1)}% coordination overhead)
+   - Effective Team Output: ${Math.round((state.humanMetrics.locPerDay * state.humanMetrics.developers) / calculationDetails.teamOverhead)} LOC/day
+
+4. Final Effective Productivity:
+   - Available Time: ${(100 - ((state.humanMetrics.meetingsPerWeek / 40) + state.humanMetrics.codeReviewTime + state.humanMetrics.documentationTime + state.humanMetrics.qaTime + state.humanMetrics.technicalDebtTime) * 100).toFixed(1)}%
+   - Team Output: ${Math.round((state.humanMetrics.locPerDay * state.humanMetrics.developers) / calculationDetails.teamOverhead)} LOC/day
+   - Final Output: ${Math.round((state.humanMetrics.locPerDay * state.humanMetrics.developers * (1 - ((state.humanMetrics.meetingsPerWeek / 40) + state.humanMetrics.codeReviewTime + state.humanMetrics.documentationTime + state.humanMetrics.qaTime + state.humanMetrics.technicalDebtTime))) / calculationDetails.teamOverhead)} LOC/day
+
+Duration Calculation:
+- Total LOC: ${formatNumber(state.project.totalLoc)}
+- Daily Output: ${Math.round((state.humanMetrics.locPerDay * state.humanMetrics.developers * (1 - ((state.humanMetrics.meetingsPerWeek / 40) + state.humanMetrics.codeReviewTime + state.humanMetrics.documentationTime + state.humanMetrics.qaTime + state.humanMetrics.technicalDebtTime))) / calculationDetails.teamOverhead)} LOC/day
+- Working Days: ${Math.ceil(state.project.totalLoc / ((state.humanMetrics.locPerDay * state.humanMetrics.developers * (1 - ((state.humanMetrics.meetingsPerWeek / 40) + state.humanMetrics.codeReviewTime + state.humanMetrics.documentationTime + state.humanMetrics.qaTime + state.humanMetrics.technicalDebtTime))) / calculationDetails.teamOverhead))} days
+- Total Hours: ${formatDuration(state.results.humanDuration)} (8-hour workdays)
+
+Cost Calculation:
+Hours × Rate × Developers × Team Overhead
+= ${formatDuration(state.results.humanDuration)} × $${state.humanMetrics.hourlyRate} × ${state.humanMetrics.developers} × ${calculationDetails.teamOverhead.toFixed(2)}
+= ${formatCurrency(state.results.humanCost)}`}
+                </pre>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
       </div>
 
       {/* Navigation */}

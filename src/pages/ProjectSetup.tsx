@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import {
   Select,
   SelectContent,
@@ -59,6 +60,17 @@ export function ProjectSetup() {
 
   return (
     <div className="max-w-2xl mx-auto">
+      <Card className="mb-8">
+        <CardHeader>
+          <h2 className="text-xl font-mono font-bold text-terminal-bright">LLM Efficiency Calculator</h2>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground">
+            Calculate and optimize the efficiency of your LLM-powered development workflow. Input your project details below to analyze token usage, cost estimates, and performance metrics.
+          </p>
+        </CardContent>
+      </Card>
+
       <h1 className="text-2xl font-mono font-bold mb-6 matrix-text">
         Project Setup
       </h1>

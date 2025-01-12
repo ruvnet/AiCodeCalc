@@ -12,22 +12,66 @@ interface LLMModel {
   inputCost: number;
   outputCost: number;
   usageShare: number;
+  // Performance metrics from SynthLang evaluation
+  executionTime: number;      // Response time in seconds
+  accuracy: number;           // Accuracy percentage
+  tokenEfficiency: number;    // Token efficiency percentage
+  reasoningScore: number;     // Reasoning capability score
+  memoryUsage: number;        // Memory usage in MB
+  errorRate: number;          // Error rate percentage
+  apiCallsPerTask: number;    // Average API calls per task
+  cacheHitRate: number;       // Cache hit rate percentage
+  // Category-specific scores
+  patternRecognition: number; // Pattern recognition score
+  contextUnderstanding: number; // Context understanding score
+  algorithmOptimization: number; // Algorithm optimization score
+  schemaHandling: number;     // Schema handling score
 }
 
 interface Overheads {
+  // Primary Overheads
   iterationOverhead: number;  // α: Code rewriting/iteration multiplier
   retryFactor: number;        // ε: Retry factor for incorrect outputs
   bugFixOverhead: number;     // δ: Bug fix overhead multiplier
   testingOverhead: number;    // γ: Testing overhead multiplier
+  
+  // Operational Expenses (OPEX)
+  infrastructureCost?: number;    // Cloud/server infrastructure costs per month
+  apiServicesCost?: number;       // Third-party API costs per month
+  monitoringCost?: number;        // Monitoring and observability tools cost
+  securityCost?: number;          // Security and compliance tools cost
+  backupCost?: number;            // Backup and disaster recovery cost
+  networkingCost?: number;        // Data transfer and networking costs
+  licensingCost?: number;         // Software licenses and tools cost
+  maintenanceCost?: number;       // Regular maintenance and updates cost
+  
+  // Advanced Overheads
+  contextSwitchOverhead?: number;  // Time lost when switching between tasks
+  toolingOverhead?: number;        // Additional overhead from tool setup and management
+  documentationOverhead?: number;  // Extra tokens for documentation generation
+  reviewOverhead?: number;         // Code review and quality assurance
+  
+  // Quality Factors
+  qualityThreshold?: number;      // Minimum acceptable quality level
+  complexityFactor?: number;      // Additional overhead for complex tasks
+  debuggingMode?: boolean;        // Enhanced debugging and logging
+  optimizationLevel?: 'minimal' | 'balanced' | 'aggressive';  // Optimization strategy
 }
 
-interface HumanMetrics {
+export interface HumanMetrics {
   hourlyRate: number;
   locPerDay: number;
   developers: number;
+  experienceLevel?: 'junior' | 'mid' | 'senior';
+  onboardingWeeks?: number;
+  meetingsPerWeek?: number;
+  codeReviewTime?: number;
+  documentationTime?: number;
+  qaTime?: number;
+  technicalDebtTime?: number;
 }
 
-interface AgentConfig {
+export interface AgentConfig {
   mode: 'single' | 'swarm' | 'parallel' | 'concurrent';
   agentCount: number;         // Number of agents in the system
   parallelTasks: number;      // Number of tasks that can run in parallel
@@ -36,12 +80,33 @@ interface AgentConfig {
   swarmEfficiency: number;    // Efficiency gain/loss from swarm behavior
   batchSize: number;          // For batch processing mode
   maxConcurrentTokens: number; // Token limit for concurrent operations
+  // Advanced settings
+  taskDistribution: 'round-robin' | 'load-balanced' | 'priority-based' | 'adaptive';
+  resourceAllocation: 'static' | 'dynamic' | 'predictive';
+  communicationProtocol: 'broadcast' | 'p2p' | 'hierarchical';
+  learningRate: number;       // Rate of agent learning and adaptation
+  specialization: number;     // Degree of agent specialization
+  consensusThreshold: number; // Required agreement level for decisions
+  failureRecovery: 'restart' | 'checkpoint' | 'adaptive';
+  debugMode: boolean;         // Enable detailed debugging
+  memoryManagement: {
+    cacheSize: number;        // Size of agent memory cache
+    retentionPeriod: number;  // How long to retain context
+    pruningStrategy: 'lru' | 'priority' | 'adaptive';
+  };
+  monitoring: {
+    metrics: string[];        // Metrics to track
+    alertThresholds: Record<string, number>;
+    logLevel: 'error' | 'warn' | 'info' | 'debug';
+  };
 }
 
 interface CalculationResults {
-  llmCost: number;
+  llmCost: number;           // Pure LLM API costs
+  operationalCost: number;   // Pro-rated OPEX costs
+  totalAgentCost: number;    // Combined LLM + OPEX costs
   humanCost: number;
-  llmDuration: number;        // In hours instead of days
+  llmDuration: number;       // In hours instead of days
   humanDuration: number;
   tokenUsage: {
     input: number;
@@ -54,6 +119,11 @@ interface CalculationResults {
     errorRate: number;
     timeReduction: number;    // Time saved due to parallelization
     costIncrease: number;     // Additional cost due to agent overhead
+  };
+  opexMetrics?: {
+    monthlyOpex: number;      // Total monthly operational expenses
+    proRatedFactor: number;   // Project duration as fraction of month
+    projectDurationDays: number; // Project duration in days
   };
 }
 
@@ -84,15 +154,45 @@ const initialState: CalculatorState = {
   },
   llmModels: [],
   overheads: {
-    iterationOverhead: 1.5,
-    retryFactor: 1.1,
-    bugFixOverhead: 1.2,
-    testingOverhead: 1.3,
+    // Primary Overheads
+    iterationOverhead: 3.5,
+    retryFactor: 3.2,
+    bugFixOverhead: 3.8,
+    testingOverhead: 3.4,
+    
+    // Operational Expenses (OPEX)
+    infrastructureCost: 200,     // $200/month for cloud infrastructure
+    apiServicesCost: 50,         // $50/month for API services
+    monitoringCost: 30,          // $30/month for monitoring tools
+    securityCost: 40,            // $40/month for security tools
+    backupCost: 20,              // $20/month for backup services
+    networkingCost: 30,          // $30/month for networking
+    licensingCost: 60,           // $60/month for licenses
+    maintenanceCost: 80,         // $80/month for maintenance
+    
+    // Advanced Overheads
+    contextSwitchOverhead: 1.8,
+    toolingOverhead: 2.2,
+    documentationOverhead: 1.6,
+    reviewOverhead: 1.9,
+    
+    // Quality Factors
+    qualityThreshold: 0.85,
+    complexityFactor: 2.4,
+    debuggingMode: false,
+    optimizationLevel: 'balanced'
   },
   humanMetrics: {
     hourlyRate: 80,
     locPerDay: 50,
     developers: 1,
+    experienceLevel: 'mid',
+    onboardingWeeks: 2,
+    meetingsPerWeek: 5,
+    codeReviewTime: 0.2,
+    documentationTime: 0.1,
+    qaTime: 0.15,
+    technicalDebtTime: 0.1,
   },
   agentConfig: {
     mode: 'single',
@@ -103,15 +203,46 @@ const initialState: CalculatorState = {
     swarmEfficiency: 1.0,
     batchSize: 1,
     maxConcurrentTokens: 4096,
+    // Advanced settings defaults
+    taskDistribution: 'round-robin',
+    resourceAllocation: 'static',
+    communicationProtocol: 'broadcast',
+    learningRate: 0.1,
+    specialization: 0.5,
+    consensusThreshold: 0.8,
+    failureRecovery: 'restart',
+    debugMode: false,
+    memoryManagement: {
+      cacheSize: 1024,
+      retentionPeriod: 3600,
+      pruningStrategy: 'lru'
+    },
+    monitoring: {
+      metrics: ['latency', 'throughput', 'error-rate', 'resource-usage'],
+      alertThresholds: {
+        latency: 1000,
+        errorRate: 0.1,
+        memoryUsage: 0.9,
+        cpuUsage: 0.8
+      },
+      logLevel: 'info'
+    }
   },
   results: {
     llmCost: 0,
+    operationalCost: 0,
+    totalAgentCost: 0,
     humanCost: 0,
     llmDuration: 0,
     humanDuration: 0,
     tokenUsage: {
       input: 0,
       output: 0,
+    },
+    opexMetrics: {
+      monthlyOpex: 0,
+      proRatedFactor: 0,
+      projectDurationDays: 0,
     },
   },
 };
