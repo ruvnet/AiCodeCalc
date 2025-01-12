@@ -47,10 +47,66 @@ function calculateTokensPerLine(complexity: string): number {
 }
 
 interface AgentConfig {
-  mode: 'single' | 'parallel' | 'swarm' | 'concurrent';
-  agentCount: number;
-  parallelTasks: number;
-  swarmEfficiency: number;
+  mode: 'single' | 'swarm' | 'parallel' | 'concurrent';
+  agentCount: number;         // Number of agents in the system
+  parallelTasks: number;      // Number of tasks that can run in parallel
+  coordinationOverhead: number; // Additional overhead for agent coordination
+  errorPropagation: number;   // How errors compound in multi-agent systems
+  swarmEfficiency: number;    // Efficiency gain/loss from swarm behavior
+  batchSize: number;          // For batch processing mode
+  maxConcurrentTokens: number; // Token limit for concurrent operations
+  // Advanced settings
+  taskDistribution: 'round-robin' | 'load-balanced' | 'priority-based' | 'adaptive';
+  resourceAllocation: 'static' | 'dynamic' | 'predictive';
+  communicationProtocol: 'broadcast' | 'p2p' | 'hierarchical';
+  learningRate: number;       // Rate of agent learning and adaptation
+  specialization: number;     // Degree of agent specialization
+  consensusThreshold: number; // Required agreement level for decisions
+  failureRecovery: 'restart' | 'checkpoint' | 'adaptive';
+  debugMode: boolean;         // Enable detailed debugging
+  memoryManagement: {
+    cacheSize: number;        // Size of agent memory cache
+    retentionPeriod: number;  // How long to retain context
+    pruningStrategy: 'lru' | 'priority' | 'adaptive';
+  };
+  monitoring: {
+    metrics: string[];        // Metrics to track
+    alertThresholds: Record<string, number>;
+    logLevel: 'error' | 'warn' | 'info' | 'debug';
+  };
+}
+
+// Calculate memory efficiency based on cache size and retention
+function calculateMemoryEfficiency(config: AgentConfig): number {
+  const { cacheSize, retentionPeriod, pruningStrategy } = config.memoryManagement;
+  const baseCacheEfficiency = Math.log2(cacheSize / 1024) * 0.1; // 10% improvement per doubling
+  const retentionFactor = Math.min(retentionPeriod / 3600, 2) * 0.05; // Up to 10% from retention
+  const pruningBonus = {
+    'lru': 0,
+    'priority': 0.05,
+    'adaptive': 0.1
+  }[pruningStrategy];
+  return 1 + baseCacheEfficiency + retentionFactor + pruningBonus;
+}
+
+// Calculate communication efficiency based on protocol and agent count
+function calculateCommunicationEfficiency(config: AgentConfig): number {
+  const protocolEfficiency = {
+    'broadcast': 1,
+    'p2p': 1.1,
+    'hierarchical': 1.15
+  }[config.communicationProtocol];
+  return protocolEfficiency * (1 + config.learningRate * 0.2); // Learning improves communication
+}
+
+// Calculate resource allocation efficiency
+function calculateResourceEfficiency(config: AgentConfig): number {
+  const allocationBonus = {
+    'static': 1,
+    'dynamic': 1.1,
+    'predictive': 1.2
+  }[config.resourceAllocation];
+  return allocationBonus * (1 + config.specialization * 0.15); // Specialization improves resource use
 }
 
 function calculateParallelizationFactor(config: AgentConfig): number {
@@ -80,9 +136,16 @@ function calculateParallelizationFactor(config: AgentConfig): number {
       baseFactor = 1;
   }
 
+  // Apply advanced configuration effects
+  const memoryEfficiency = calculateMemoryEfficiency(config);
+  const communicationEfficiency = calculateCommunicationEfficiency(config);
+  const resourceEfficiency = calculateResourceEfficiency(config);
+  
   // Apply diminishing returns for large agent counts
   const diminishingFactor = 1 / (1 + Math.log10(Math.max(agentCount, 1)));
-  return baseFactor * (0.5 + 0.5 * diminishingFactor); // Blend linear and diminishing factors
+  const advancedFactor = (memoryEfficiency * communicationEfficiency * resourceEfficiency);
+  
+  return baseFactor * (0.5 + 0.5 * diminishingFactor) * advancedFactor;
 }
 
 export function Results() {
@@ -164,9 +227,11 @@ export function Results() {
     const coordinationOverhead = state.agentConfig.mode === 'single' ? 
       1 : state.agentConfig.coordinationOverhead;
     
-    // Calculate error propagation based on agent count
-    const errorMultiplier = 1 + (state.agentConfig.errorPropagation - 1) * 
+    // Calculate error propagation with learning rate reduction
+    const baseErrorMultiplier = 1 + (state.agentConfig.errorPropagation - 1) * 
       (state.agentConfig.agentCount > 1 ? Math.log2(state.agentConfig.agentCount) : 0);
+    const learningReduction = state.agentConfig.learningRate * 0.3; // Up to 30% error reduction
+    const errorMultiplier = Math.max(1, baseErrorMultiplier * (1 - learningReduction));
     
     // Calculate LLM costs with agent configuration
     const llmCost = state.llmModels.reduce((total, model) => {
@@ -552,6 +617,32 @@ ${state.project.totalLoc} × ${calculateTokensPerLine(state.project.complexity)}
 
 Input Tokens (30%) = ${formatNumber(state.results.tokenUsage.input)}
 Output Tokens (70%) = ${formatNumber(state.results.tokenUsage.output)}`}
+                </pre>
+              </div>
+
+              <div>
+                <h4 className="font-mono text-terminal-bright mb-2">Advanced Configuration Impact</h4>
+                <pre className="text-sm bg-background-primary p-4 rounded">
+                  {`1. Memory Management:
+Cache Size: ${state.agentConfig.memoryManagement.cacheSize}MB
+Retention Period: ${state.agentConfig.memoryManagement.retentionPeriod}s
+Pruning Strategy: ${state.agentConfig.memoryManagement.pruningStrategy}
+Memory Efficiency: ${calculateMemoryEfficiency(state.agentConfig).toFixed(2)}x
+
+2. Communication Protocol:
+Protocol: ${state.agentConfig.communicationProtocol}
+Learning Rate: ${state.agentConfig.learningRate}
+Communication Efficiency: ${calculateCommunicationEfficiency(state.agentConfig).toFixed(2)}x
+
+3. Resource Management:
+Allocation Strategy: ${state.agentConfig.resourceAllocation}
+Specialization: ${state.agentConfig.specialization}
+Resource Efficiency: ${calculateResourceEfficiency(state.agentConfig).toFixed(2)}x
+
+4. Combined Impact:
+Total Efficiency Multiplier: ${(calculateMemoryEfficiency(state.agentConfig) * 
+calculateCommunicationEfficiency(state.agentConfig) * 
+calculateResourceEfficiency(state.agentConfig)).toFixed(2)}x`}
                 </pre>
               </div>
 
