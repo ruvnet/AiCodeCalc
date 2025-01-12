@@ -1,0 +1,238 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Dark Theme Colors */
+    --background-primary: 16 16 16;     /* #101010 Deep Dark */
+    --background-secondary: 24 24 24;   /* #181818 Slightly Lighter */
+    --background-tertiary: 32 32 32;    /* #202020 Card Background */
+    
+    /* Pure Greys */
+    --grey-50: 250 250 250;   /* #FAFAFA */
+    --grey-100: 240 240 240;  /* #F0F0F0 */
+    --grey-200: 220 220 220;  /* #DCDCDC */
+    --grey-300: 200 200 200;  /* #C8C8C8 */
+    --grey-400: 160 160 160;  /* #A0A0A0 */
+    --grey-500: 128 128 128;  /* #808080 */
+    --grey-600: 96 96 96;     /* #606060 */
+    --grey-700: 64 64 64;     /* #404040 */
+    --grey-800: 32 32 32;     /* #202020 */
+    --grey-900: 16 16 16;     /* #101010 */
+    
+    /* Terminal Green */
+    --terminal-primary: 0 255 0;      /* #00FF00 Terminal Green */
+    --terminal-bright: 0 255 65;      /* #00FF41 Bright Terminal */
+    --terminal-muted: 0 200 0;       /* #00C800 Muted Terminal */
+    --terminal-dark: 0 150 0;        /* #009600 Dark Terminal */
+    
+    /* System Colors */
+    --success: 0 255 0;       /* #00FF00 Pure Green */
+    --warning: 255 255 0;     /* #FFFF00 Pure Yellow */
+    --error: 255 0 0;         /* #FF0000 Pure Red */
+    --info: 0 255 255;        /* #00FFFF Pure Cyan */
+
+    /* Theme Mapping */
+    --background: var(--background-primary);
+    --foreground: var(--grey-200);
+    
+    --card: var(--background-tertiary);
+    --card-foreground: var(--grey-200);
+    
+    --popover: var(--background-secondary);
+    --popover-foreground: var(--grey-200);
+    
+    --primary: var(--terminal-primary);
+    --primary-foreground: var(--background-primary);
+    
+    --secondary: var(--terminal-muted);
+    --secondary-foreground: var(--grey-200);
+    
+    --muted: var(--grey-700);
+    --muted-foreground: var(--grey-400);
+    
+    --accent: var(--terminal-bright);
+    --accent-foreground: var(--background-primary);
+    
+    --destructive: var(--error);
+    --destructive-foreground: var(--grey-200);
+    
+    --border: var(--terminal-primary);
+    --input: var(--background-secondary);
+    --ring: var(--terminal-primary);
+    
+    --radius: 0;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border/20;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+/* Professional Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgb(var(--background-secondary));
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgb(var(--terminal-dark));
+  border-radius: 0;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--terminal-muted));
+}
+
+/* Terminal Text Effect */
+.matrix-text {
+  color: rgb(var(--terminal-bright));
+  text-shadow: 0 0 10px rgb(var(--terminal-primary) / 0.5);
+  transition: text-shadow 0.3s ease;
+}
+
+.matrix-text:hover {
+  text-shadow: 0 0 10px rgb(var(--terminal-primary) / 0.7),
+               0 0 20px rgb(var(--terminal-primary) / 0.5);
+}
+
+/* Form Elements */
+input, select, textarea {
+  @apply bg-input text-foreground border-border/20 rounded-none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+input:focus, select:focus, textarea:focus {
+  @apply outline-none ring-1 ring-primary/20 border-primary/20;
+  box-shadow: 0 0 0 1px rgb(var(--terminal-primary) / 0.1);
+}
+
+/* Button Styles */
+.btn-primary {
+  @apply bg-primary text-primary-foreground hover:bg-primary/90 
+         rounded-none px-4 py-2 font-medium transition-all
+         focus:outline-none focus:ring-1 focus:ring-primary/20 focus:ring-offset-1
+         disabled:pointer-events-none disabled:opacity-50;
+}
+
+.btn-secondary {
+  @apply bg-muted text-muted-foreground hover:bg-muted/90
+         rounded-none px-4 py-2 font-medium transition-all
+         focus:outline-none focus:ring-1 focus:ring-primary/20 focus:ring-offset-1
+         disabled:pointer-events-none disabled:opacity-50;
+}
+
+/* Card Styles */
+.card {
+  @apply bg-card text-card-foreground rounded-none border border-border/20;
+}
+
+/* Navigation Styles */
+.nav-link {
+  @apply text-foreground hover:text-primary transition-colors;
+}
+
+.nav-link.active {
+  @apply text-primary;
+}
+
+/* Typography */
+.font-mono {
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: -0.5px;
+}
+
+.font-sans {
+  font-family: 'Inter', sans-serif;
+}
+
+/* Professional Hover Effects */
+.hover-glow {
+  transition: box-shadow 0.3s ease;
+}
+
+.hover-glow:hover {
+  box-shadow: 0 0 10px rgb(var(--terminal-primary) / 0.1),
+              0 0 20px rgb(var(--terminal-primary) / 0.05);
+}
+
+/* Form Field Styles */
+.form-field {
+  @apply relative border border-border/20 bg-input rounded-none 
+         focus-within:border-primary/20 focus-within:ring-1 focus-within:ring-primary/20;
+  transition: all 0.2s ease;
+}
+
+/* Slider Styles */
+.slider-track {
+  @apply bg-muted h-1 rounded-none;
+}
+
+.slider-range {
+  @apply bg-primary h-1 rounded-none;
+}
+
+.slider-thumb {
+  @apply w-4 h-4 bg-primary rounded-none border-2 border-background
+         focus:outline-none focus:ring-2 focus:ring-primary/20 focus:ring-offset-2
+         transition-shadow duration-200;
+}
+
+/* Progress Bar */
+.progress-bar {
+  @apply bg-muted rounded-none overflow-hidden;
+}
+
+.progress-bar-fill {
+  @apply bg-primary h-full transition-all duration-300;
+}
+
+/* Loading States */
+.loading {
+  @apply animate-pulse bg-muted rounded-none;
+}
+
+/* Focus Styles */
+.focus-ring {
+  @apply focus:outline-none focus:ring-1 focus:ring-primary/20 focus:ring-offset-1;
+}
+
+/* Matrix Effects */
+@keyframes scan {
+  from {
+    transform: translateY(-100vh);
+  }
+  to {
+    transform: translateY(100vh);
+  }
+}
+
+@keyframes matrix-rain {
+  from {
+    background-position: 0 -50px;
+  }
+  to {
+    background-position: 0 0;
+  }
+}
+
+.scan-line {
+  animation: scan 8s linear infinite;
+}
+
+.matrix-rain {
+  background: repeating-linear-gradient(0deg, rgba(var(--terminal-primary), 0.15) 0%, rgba(var(--terminal-primary), 0) 50%);
+  background-size: 100% 50px;
+  animation: matrix-rain 20s linear infinite;
+}
