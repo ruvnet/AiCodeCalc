@@ -36,24 +36,24 @@ export function NavigationBar() {
   return (
     <nav className="border-b border-terminal-primary/10 bg-background/80 backdrop-blur">
       <div className="max-w-2xl mx-auto px-4">
-        <div className="flex h-14 items-center justify-between">
-          {/* Logo */}
-          <NavLink 
-            to="/" 
-            className="flex items-center space-x-2 font-mono matrix-text"
-          >
-            <span className="text-sm">$</span>
-            <span className="text-lg font-bold">AiCodeCalc</span>
-            <span className="text-xs opacity-50">v1.0.0</span>
-          </NavLink>
+        <div className="flex h-14 items-center justify-between relative z-50 bg-background/80 backdrop-blur">
+          <div className="flex items-center justify-between w-full">
+            {/* Logo */}
+            <NavLink 
+              to="/" 
+              className="flex items-center space-x-2 font-mono matrix-text"
+            >
+              <span className="text-sm">$</span>
+              <span className="text-lg font-bold">AiCodeCalc</span>
+              <span className="text-xs opacity-50">v1.0.0</span>
+            </NavLink>
 
-          {/* Mobile Menu Button */}
-          {isMobile && (
+            {/* Mobile Menu Button */}
             <Button
               variant="ghost"
               size="icon"
               onClick={toggleMenu}
-              className="md:hidden"
+              className="block md:hidden"
             >
               {isOpen ? (
                 <X className="h-5 w-5 text-terminal-bright" />
@@ -61,14 +61,14 @@ export function NavigationBar() {
                 <Menu className="h-5 w-5 text-terminal-bright" />
               )}
             </Button>
-          )}
+          </div>
 
           {/* Navigation Links */}
           <div
             className={`${
               isMobile
-                ? `absolute left-0 right-0 top-14 z-50 bg-background-secondary shadow-lg transition-all duration-200 ease-in-out ${
-                    isOpen ? 'translate-y-0' : '-translate-y-full'
+                ? `absolute left-0 right-0 top-14 z-40 bg-background/95 shadow-lg transition-all duration-200 ease-in-out ${
+                    isOpen ? 'translate-y-0 opacity-100' : '-translate-y-2 opacity-0 pointer-events-none'
                   }`
                 : 'flex items-center space-x-1'
             }`}
