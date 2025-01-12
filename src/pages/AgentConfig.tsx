@@ -332,7 +332,7 @@ export function AgentConfig() {
               id="coordinationOverhead"
               type="number"
               min="1"
-              step="0.1"
+              step="0.001"
               placeholder={defaultValues.coordinationOverhead.toString()}
               value={state.agentConfig.coordinationOverhead || ''}
               onChange={(e) =>
@@ -355,7 +355,7 @@ export function AgentConfig() {
               id="errorPropagation"
               type="number"
               min="1"
-              step="0.1"
+              step="0.001"
               placeholder={defaultValues.errorPropagation.toString()}
               value={state.agentConfig.errorPropagation || ''}
               onChange={(e) =>
@@ -379,7 +379,7 @@ export function AgentConfig() {
               type="number"
               min="0"
               max="2"
-              step="0.1"
+              step="0.001"
               placeholder={defaultValues.swarmEfficiency.toString()}
               value={state.agentConfig.swarmEfficiency || ''}
               onChange={(e) =>
@@ -482,7 +482,7 @@ export function AgentConfig() {
                       id="learningRate"
                       min={0}
                       max={1}
-                      step={0.1}
+                      step={0.001}
                       value={[state.agentConfig.learningRate]}
                       onValueChange={([value]) =>
                         dispatch({
@@ -500,7 +500,7 @@ export function AgentConfig() {
                       id="specialization"
                       min={0}
                       max={1}
-                      step={0.1}
+                      step={0.001}
                       value={[state.agentConfig.specialization]}
                       onValueChange={([value]) =>
                         dispatch({
@@ -518,7 +518,7 @@ export function AgentConfig() {
                       id="consensusThreshold"
                       min={0}
                       max={1}
-                      step={0.1}
+                      step={0.001}
                       value={[state.agentConfig.consensusThreshold]}
                       onValueChange={([value]) =>
                         dispatch({
